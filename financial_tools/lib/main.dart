@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
 
 class Variables {
   final double personalAllowanceThreshold = 12570;
@@ -44,7 +45,22 @@ class MyApp extends StatelessWidget {
   }
 }
 
+String formatNumber (double pay) {
+      String roundedPay = pay.toStringAsFixed(2);
+      int count = 0;
+      for (int i = 3; i < roundedPay.length; i++) {
+        if (count == 3) {
+          roundedPay = '${roundedPay.substring(0, roundedPay.length - i)},${roundedPay.substring(roundedPay.length - i)}';
+          count = 0;
+        }
+        else {
+          count += 1;
+        }
+      }
+      String output = '£$roundedPay';
 
+      return output;
+    }
 
 class MyAppState extends ChangeNotifier {
 
@@ -91,6 +107,8 @@ class _MyHomePageState extends State<MyHomePage> {
         page = GeneratorPage();
       case 1:
         page = TakeHomePayPage();
+      case 2:
+        page = PensionPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -112,6 +130,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       icon: Icon(Icons.favorite),
                       label: Text('Take-home Pay'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.favorite),
+                      label: Text('Pension')
+                      ),
                   ],
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (value) {
@@ -138,9 +160,165 @@ class _MyHomePageState extends State<MyHomePage> {
 class GeneratorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(children: [Row(children: [SizedBox(child: Text('A collection of tools to help manage finances. WIP.\nLast updated: 25/2/25'))])]);
+    return Column(children: [Row(children: [SizedBox(child: Text('A collection of tools to help manage finances. WIP.\nLast updated: 4/3/25'))])]);
   }
 }
+
+class PensionPage extends StatefulWidget {
+  @override
+  _PensionPageState createState() => _PensionPageState();
+}
+
+
+class _PensionPageState extends State<PensionPage> {
+
+  bool _isChecked = false;
+  double totalPaymentYearly = 0.0;
+  int yearsUntilRetirement = 0;
+  double interest = 0;
+  
+  @override
+  Widget build(BuildContext context) {
+
+    final TextEditingController payController = TextEditingController();
+    final TextEditingController personalPercentageController = TextEditingController();
+    final TextEditingController companyPercentageController = TextEditingController();
+    final TextEditingController extraAmountMonthlyController = TextEditingController();
+    final TextEditingController yearsUntilRetirementController = TextEditingController();
+    final TextEditingController interestController = TextEditingController();
+
+    
+
+    double calculatePensionSavings(double paymentMonthly, int monthsUntilRetirement, double interestRateMonthly) {
+      if (monthsUntilRetirement > 0) {
+        return paymentMonthly * pow(interestRateMonthly, paymentMonthly) + calculatePensionSavings(paymentMonthly, monthsUntilRetirement - 1, interestRateMonthly);
+      }
+      else {
+        return 0.0;
+      }
+
+
+
+
+    }
+    
+    double pensionSavings = calculatePensionSavings(totalPaymentYearly / 12, yearsUntilRetirement * 12, 1 + (interest * 0.01)/12);
+    print(1 + (interest * 0.01)/12); 
+    return Column(
+      children: <Widget>[
+        Row(
+          children: [
+            Checkbox(value: _isChecked, onChanged: (bool? newValue) {
+              setState(() {
+                _isChecked = newValue!;
+              });
+            })
+          ],
+        ),
+        Row(
+          children: <Widget>[
+            Text('    Gross Income:  £  ', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(width: 100, height: 40, child: TextField(controller: payController,
+            decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            ),)),
+          ]
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: <Widget>[
+            Text('    Pension Deduction:  %  ', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(width: 100, height: 40, child: TextField(controller: personalPercentageController,
+            decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            ),)),
+          ]
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: <Widget>[
+            Text('    Company Pension Payment:  %  ', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(width: 100, height: 40, child: TextField(controller: companyPercentageController,
+            decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            ),)),
+          ]
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: <Widget>[
+            Text('    Extra Contribution (Monthly):  £  ', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(width: 100, height: 40, child: TextField(controller: extraAmountMonthlyController,
+            decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            ),)),
+          ]
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: <Widget>[
+            Text('    Years Until Retirement:  ', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(width: 100, height: 40, child: TextField(controller: yearsUntilRetirementController,
+            decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            ),)),
+          ]
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: <Widget>[
+            Text('    Average Yearly Interest:  %  ', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(width: 100, height: 40, child: TextField(controller: interestController,
+            decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            ),)),
+          ]
+        ),
+        Row(children: [
+          ElevatedButton(onPressed: () {
+            setState(() {
+              totalPaymentYearly = (double.parse(payController.text) * 0.01 * double.parse(personalPercentageController.text)) + (double.parse(payController.text) * 0.01 * double.parse(companyPercentageController.text)) + (double.parse(extraAmountMonthlyController.text) * 12);
+              yearsUntilRetirement = int.parse(yearsUntilRetirementController.text);
+              interest = double.parse(interestController.text);
+            });
+          }, child: Text('Go!')),
+          Text(formatNumber(totalPaymentYearly)),
+          Text('            '),
+          Text(formatNumber(pensionSavings)),
+        ],)
+      ]
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class TakeHomePayPage extends StatelessWidget {
   @override
@@ -148,26 +326,6 @@ class TakeHomePayPage extends StatelessWidget {
     var appState = context.watch<MyAppState>();
     final TextEditingController payController = TextEditingController();
     final TextEditingController pensionController = TextEditingController();
-    
-
-
-
-    String formatNumber (double pay) {
-      String roundedPay = pay.toStringAsFixed(2);
-      int count = 0;
-      for (int i = 3; i < roundedPay.length; i++) {
-        if (count == 3) {
-          roundedPay = '${roundedPay.substring(0, roundedPay.length - i)},${roundedPay.substring(roundedPay.length - i)}';
-          count = 0;
-        }
-        else {
-          count += 1;
-        }
-      }
-      String output = '£$roundedPay';
-
-      return output;
-    }
 
     double calculateTaxDeductions (double pay) {
       if (pay > Variables().higherRateThreshold) {
@@ -246,7 +404,7 @@ class TakeHomePayPage extends StatelessWidget {
          ),
          ElevatedButton(onPressed: () {appState.updateIncome(double.parse(payController.text), double.parse(pensionController.text));}, child: Text('Go!')),
          SizedBox(height: 20,),
-         ElevatedButton(onPressed: () {appState.updateStudentLoanRepayments();}, child: Text('Toggle student loan repayments')),
+         ElevatedButton(onPressed: () {appState.updateStudentLoanRepayments();}, child: Text('Toggle student loan repayments (Plan 2)')),
          SizedBox(height: 20),
          Table(
           border: TableBorder.all(color: Colors.black, width: 2),
