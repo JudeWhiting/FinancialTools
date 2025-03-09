@@ -1,7 +1,7 @@
-name: financial_tools
-description: A new Flutter project.
+name: flutter_application
+description: Financial Webtools
 
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
 version: 0.0.1+1
 
